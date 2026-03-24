@@ -97,7 +97,7 @@
 
 	<div class="header">
 		<h1>Portfolio Uploader</h1>
-		<p>Select which portfolio you want to update, drop in the new PDF, and hit publish. The tool will upload the file and update the website automatically — no manual steps needed.</p>
+		<p>Select which portfolio you want to update, drop in the new PDF, and hit publish. The tool will upload the file and update the website automatically.</p>
 	</div>
 
 	<div class="type-select">
