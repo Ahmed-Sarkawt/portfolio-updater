@@ -26,3 +26,4 @@ vite.config.ts.timestamp-*
 portfolio_deploy_key
 portfolio_deploy_key.pub
 context-handoff.md
+netlify.env

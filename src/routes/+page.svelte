@@ -1,12 +1,21 @@
 <script lang="ts">
 	type PortfolioType = 'design' | 'architecture';
-	type Status = 'idle' | 'uploading' | 'success' | 'error';
+	type Status = 'idle' | 'presigning' | 'uploading' | 'patching' | 'success' | 'error';
 
 	let type = $state<PortfolioType>('design');
 	let file = $state<File | null>(null);
 	let status = $state<Status>('idle');
 	let message = $state('');
 	let dragging = $state(false);
+
+	const statusLabel: Record<Status, string> = {
+		idle: 'Upload & Publish',
+		presigning: 'Preparing…',
+		uploading: 'Uploading to R2…',
+		patching: 'Updating website…',
+		success: 'Upload & Publish',
+		error: 'Upload & Publish'
+	};
 
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
@@ -22,15 +31,38 @@
 
 	async function upload() {
 		if (!file) return;
-		status = 'uploading';
+		status = 'presigning';
 		message = '';
+
 		try {
-			const fd = new FormData();
-			fd.append('file', file);
-			fd.append('type', type);
-			const res = await fetch('/api/upload', { method: 'POST', body: fd });
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.message ?? 'Upload failed');
+			// Step 1: get pre-signed R2 URL
+			const presignRes = await fetch('/api/presign', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type })
+			});
+			if (!presignRes.ok) throw new Error('Failed to get upload URL');
+			const { uploadUrl } = await presignRes.json();
+
+			// Step 2: upload PDF directly to R2
+			status = 'uploading';
+			const uploadRes = await fetch(uploadUrl, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/pdf' },
+				body: file
+			});
+			if (!uploadRes.ok) throw new Error(`R2 upload failed: ${uploadRes.status}`);
+
+			// Step 3: patch GitHub
+			status = 'patching';
+			const patchRes = await fetch('/api/patch', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type })
+			});
+			const data = await patchRes.json();
+			if (!patchRes.ok) throw new Error(data.message ?? 'GitHub patch failed');
+
 			status = 'success';
 			message = `Done! Published at ${data.url}`;
 			file = null;
@@ -39,6 +71,8 @@
 			message = err instanceof Error ? err.message : 'Unknown error';
 		}
 	}
+
+	const busy = $derived(['presigning', 'uploading', 'patching'].includes(status));
 </script>
 
 <main>
@@ -76,8 +110,8 @@
 		{/if}
 	</div>
 
-	<button class="upload-btn" disabled={!file || status === 'uploading'} onclick={upload}>
-		{status === 'uploading' ? 'Uploading…' : 'Upload & Publish'}
+	<button class="upload-btn" disabled={!file || busy} onclick={upload}>
+		{statusLabel[status]}
 	</button>
 
 	{#if message}
