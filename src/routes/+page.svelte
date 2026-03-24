@@ -73,6 +73,17 @@
 	}
 
 	const busy = $derived(['presigning', 'uploading', 'patching'].includes(status));
+
+	const progress = $derived({
+		idle: 0,
+		presigning: 20,
+		uploading: 55,
+		patching: 85,
+		success: 100,
+		error: 0
+	}[status]);
+
+	const showProgress = $derived(busy);
 </script>
 
 <header>
@@ -128,6 +139,13 @@
 			</label>
 		{/if}
 	</div>
+
+	{#if showProgress}
+		<div class="progress-wrap">
+			<div class="progress-bar" style="width: {progress}%"></div>
+		</div>
+		<p class="progress-label">{statusLabel[status]}</p>
+	{/if}
 
 	<button class="upload-btn" disabled={!file || busy} onclick={upload}>
 		{statusLabel[status]}
@@ -261,6 +279,27 @@
 	}
 
 	.browse input { display: none; }
+
+	.progress-wrap {
+		height: 6px;
+		background: #e2e8f0;
+		border-radius: 999px;
+		overflow: hidden;
+	}
+
+	.progress-bar {
+		height: 100%;
+		background: #da291c;
+		border-radius: 999px;
+		transition: width 0.4s ease;
+	}
+
+	.progress-label {
+		margin: -12px 0 0;
+		font-size: 0.85rem;
+		color: #64748b;
+		text-align: center;
+	}
 
 	.upload-btn {
 		padding: 14px;
