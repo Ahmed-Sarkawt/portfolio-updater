@@ -25,5 +25,7 @@ vite.config.ts.timestamp-*
 # SSH keys
 portfolio_deploy_key
 portfolio_deploy_key.pub
+contabo_key
+contabo_key.pub
 context-handoff.md
 netlify.env
