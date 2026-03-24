@@ -152,8 +152,8 @@
 	}
 
 	.type-select label.active {
-		border-color: #6366f1;
-		color: #6366f1;
+		border-color: #da291c;
+		color: #da291c;
 	}
 
 	.type-select input { display: none; }
@@ -168,13 +168,13 @@
 	}
 
 	.dropzone.dragging {
-		border-color: #6366f1;
+		border-color: #da291c;
 		background: #eef2ff;
 	}
 
 	.dropzone.has-file {
 		border-style: solid;
-		border-color: #6366f1;
+		border-color: #da291c;
 	}
 
 	.dropzone p { margin: 0 0 12px; color: #64748b; }
@@ -198,7 +198,7 @@
 	.browse {
 		display: inline-block;
 		padding: 8px 20px;
-		background: #6366f1;
+		background: #da291c;
 		color: white;
 		border-radius: 8px;
 		cursor: pointer;
@@ -209,7 +209,7 @@
 
 	.upload-btn {
 		padding: 12px;
-		background: #6366f1;
+		background: #da291c;
 		color: white;
 		border: none;
 		border-radius: 10px;
