@@ -66,6 +66,7 @@
 			status = 'success';
 			message = `Published successfully. The website will update in ~1 minute.`;
 			file = null;
+			if (activeTrigger === 'successUpload') showMushu();
 		} catch (err: unknown) {
 			status = 'error';
 			message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -73,6 +74,42 @@
 	}
 
 	const busy = $derived(['presigning', 'uploading', 'patching'].includes(status));
+
+	// ── Mushu ────────────────────────────────────────────────────────────────
+	type Trigger = 'evenMinute' | 'timeOfDay' | 'successUpload' | 'buttonHover';
+	const triggers: Trigger[] = ['evenMinute', 'timeOfDay', 'successUpload', 'buttonHover'];
+	const activeTrigger = $state(triggers[Math.floor(Math.random() * triggers.length)]);
+	let mushuVisible = $state(false);
+
+	function showMushu() {
+		mushuVisible = true;
+		setTimeout(() => (mushuVisible = false), 3500);
+	}
+
+	// Even minutes — check every 30s
+	$effect(() => {
+		if (activeTrigger !== 'evenMinute') return;
+		const check = () => { if (new Date().getMinutes() % 2 === 0) showMushu(); };
+		check();
+		const id = setInterval(check, 30_000);
+		return () => clearInterval(id);
+	});
+
+	// Time of day — show at 9am, 12pm, 3pm, 6pm (checked every minute)
+	$effect(() => {
+		if (activeTrigger !== 'timeOfDay') return;
+		const check = () => {
+			const h = new Date().getHours(), m = new Date().getMinutes();
+			if ([9, 12, 15, 18].includes(h) && m === 0) showMushu();
+		};
+		check();
+		const id = setInterval(check, 60_000);
+		return () => clearInterval(id);
+	});
+
+	function onButtonHover() {
+		if (activeTrigger === 'buttonHover') showMushu();
+	}
 
 	const progress = $derived({
 		idle: 0,
@@ -109,11 +146,11 @@
 	</div>
 
 	<div class="type-select">
-		<label class:active={type === 'design'}>
+		<label class:active={type === 'design'} onmouseenter={onButtonHover}>
 			<input type="radio" bind:group={type} value="design" />
 			Design
 		</label>
-		<label class:active={type === 'architecture'}>
+		<label class:active={type === 'architecture'} onmouseenter={onButtonHover}>
 			<input type="radio" bind:group={type} value="architecture" />
 			Architecture
 		</label>
@@ -150,6 +187,10 @@
 	<button class="upload-btn" disabled={!file || busy} onclick={upload}>
 		{statusLabel[status]}
 	</button>
+
+	{#if mushuVisible}
+		<img src="/Mushu.jpg" alt="Mushu" class="mushu" />
+	{/if}
 
 	{#if message}
 		<p class="msg" class:error={status === 'error'}>{message}</p>
@@ -327,6 +368,24 @@
 		color: #15803d;
 		font-size: 0.9rem;
 		text-align: left;
+	}
+
+	.mushu {
+		width: 120px;
+		height: 120px;
+		object-fit: cover;
+		border-radius: 50%;
+		margin: 0 auto;
+		display: block;
+		animation: mushu-pop 3.5s ease forwards;
+	}
+
+	@keyframes mushu-pop {
+		0%   { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+		15%  { opacity: 1; transform: scale(1.1) rotate(5deg); }
+		25%  { transform: scale(1) rotate(0deg); }
+		75%  { opacity: 1; transform: scale(1); }
+		100% { opacity: 0; transform: scale(0.8); }
 	}
 
 	.msg.error {
