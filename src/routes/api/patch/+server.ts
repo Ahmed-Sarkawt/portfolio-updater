@@ -1,6 +1,21 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
+const LOG_PATH = join(process.cwd(), 'data', 'uploads.json');
+
+function readLogs(): object[] {
+	try { return JSON.parse(readFileSync(LOG_PATH, 'utf-8')); }
+	catch { return []; }
+}
+
+function writeLog(entry: object) {
+	mkdirSync(join(process.cwd(), 'data'), { recursive: true });
+	const logs = [entry, ...readLogs()].slice(0, 3);
+	writeFileSync(LOG_PATH, JSON.stringify(logs, null, 2));
+}
 
 const R2_KEYS = {
 	design: 'WS_Portfolio_2025.pdf',
@@ -53,6 +68,10 @@ async function updateFile(repo: string, filePath: string, newContent: string, sh
 }
 
 export const POST: RequestHandler = async ({ request }) => {
+	const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+		?? request.headers.get('x-real-ip')
+		?? 'unknown';
+	const ua = request.headers.get('user-agent') ?? 'unknown';
 	const { type } = await request.json();
 
 	if (!type || !['design', 'architecture'].includes(type)) {
@@ -75,6 +94,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			await updateFile(env.GITHUB_REPO, filePath, updated, sha, `chore: update ${type} portfolio PDF link`);
 		}
 	}
+
+	writeLog({
+		timestamp: new Date().toISOString(),
+		type,
+		url: newUrl,
+		ip,
+		userAgent: ua
+	});
 
 	return json({ ok: true, url: newUrl });
 };

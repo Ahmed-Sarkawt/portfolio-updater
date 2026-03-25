@@ -67,6 +67,7 @@
 			message = `Published successfully. The website will update in ~1 minute.`;
 			file = null;
 			if (activeTrigger === 'successUpload') showMushu();
+			fetchLogs();
 		} catch (err: unknown) {
 			status = 'error';
 			message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -74,6 +75,33 @@
 	}
 
 	const busy = $derived(['presigning', 'uploading', 'patching'].includes(status));
+
+	// ── Logs ─────────────────────────────────────────────────────────────────
+	type LogEntry = { timestamp: string; type: string; ip: string; userAgent: string; url: string };
+	let logs = $state<LogEntry[]>([]);
+
+	async function fetchLogs() {
+		const res = await fetch('/api/logs');
+		if (res.ok) logs = await res.json();
+	}
+
+	$effect(() => { fetchLogs(); });
+
+	function formatDate(iso: string) {
+		return new Date(iso).toLocaleString('en-GB', {
+			day: '2-digit', month: 'short', year: 'numeric',
+			hour: '2-digit', minute: '2-digit'
+		});
+	}
+
+	function parseDevice(ua: string) {
+		if (/iPhone|iPad/.test(ua)) return '📱 iOS';
+		if (/Android/.test(ua)) return '📱 Android';
+		if (/Mac/.test(ua)) return '💻 Mac';
+		if (/Windows/.test(ua)) return '🖥️ Windows';
+		if (/Linux/.test(ua)) return '🖥️ Linux';
+		return '🌐 Unknown';
+	}
 
 	// ── Mushu ────────────────────────────────────────────────────────────────
 	type Trigger = 'evenMinute' | 'timeOfDay' | 'successUpload' | 'buttonHover';
@@ -187,6 +215,26 @@
 	<button class="upload-btn" disabled={!file || busy} onclick={upload}>
 		{statusLabel[status]}
 	</button>
+
+	{#if logs.length > 0}
+		<div class="logs">
+			<h2>Recent Uploads</h2>
+			{#each logs as log}
+				<div class="log-entry">
+					<div class="log-row">
+						<span class="log-type" class:design={log.type === 'design'} class:arch={log.type === 'architecture'}>
+							{log.type === 'design' ? 'Design' : 'Architecture'}
+						</span>
+						<span class="log-date">{formatDate(log.timestamp)}</span>
+					</div>
+					<div class="log-row secondary">
+						<span>{parseDevice(log.userAgent)}</span>
+						<span class="log-ip">{log.ip}</span>
+					</div>
+				</div>
+			{/each}
+		</div>
+	{/if}
 
 	{#if mushuVisible}
 		<img src="/Mushu.jpg" alt="Mushu" class="mushu" />
@@ -368,6 +416,66 @@
 		color: #15803d;
 		font-size: 0.9rem;
 		text-align: left;
+	}
+
+	.logs {
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		overflow: hidden;
+		background: white;
+		text-align: left;
+	}
+
+	.logs h2 {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #94a3b8;
+		margin: 0;
+		padding: 12px 16px;
+		border-bottom: 1px solid #f1f5f9;
+	}
+
+	.log-entry {
+		padding: 12px 16px;
+		border-bottom: 1px solid #f1f5f9;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.log-entry:last-child { border-bottom: none; }
+
+	.log-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.log-row.secondary {
+		font-size: 0.8rem;
+		color: #94a3b8;
+	}
+
+	.log-type {
+		font-size: 0.85rem;
+		font-weight: 600;
+		padding: 2px 8px;
+		border-radius: 4px;
+	}
+
+	.log-type.design { background: #eff6ff; color: #3b82f6; }
+	.log-type.arch   { background: #f0fdf4; color: #16a34a; }
+
+	.log-date {
+		font-size: 0.8rem;
+		color: #64748b;
+	}
+
+	.log-ip {
+		font-family: monospace;
+		font-size: 0.75rem;
 	}
 
 	.mushu {
