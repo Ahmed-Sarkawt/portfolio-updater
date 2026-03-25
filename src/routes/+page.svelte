@@ -216,13 +216,14 @@
 		<p class="progress-label">{statusLabel[status]}</p>
 	{/if}
 
-	<button class="upload-btn" disabled={!file || busy} onclick={upload}>
-		{statusLabel[status]}
-	</button>
-
-	<button class="logs-btn" onclick={toggleLogs}>
-		{showLogs ? 'Hide Logs' : 'View Logs'}
-	</button>
+	<div class="btn-row">
+		<button class="upload-btn" disabled={!file || busy} onclick={upload}>
+			{statusLabel[status]}
+		</button>
+		<button class="logs-btn" onclick={toggleLogs}>
+			{showLogs ? 'Hide Logs' : 'View Logs'}
+		</button>
+	</div>
 
 	{#if showLogs}
 		<div class="logs">
@@ -401,7 +402,14 @@
 		text-align: center;
 	}
 
+	.btn-row {
+		display: flex;
+		gap: 10px;
+		align-items: stretch;
+	}
+
 	.upload-btn {
+		flex: 1;
 		padding: 14px;
 		background: #da291c;
 		color: white;
@@ -438,7 +446,7 @@
 		color: #64748b;
 		cursor: pointer;
 		transition: border-color 0.15s, color 0.15s;
-		align-self: center;
+		white-space: nowrap;
 	}
 
 	.logs-btn:hover {
