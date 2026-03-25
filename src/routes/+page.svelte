@@ -79,13 +79,17 @@
 	// ── Logs ─────────────────────────────────────────────────────────────────
 	type LogEntry = { timestamp: string; type: string; ip: string; userAgent: string; url: string };
 	let logs = $state<LogEntry[]>([]);
+	let showLogs = $state(false);
 
 	async function fetchLogs() {
 		const res = await fetch('/api/logs');
 		if (res.ok) logs = await res.json();
 	}
 
-	$effect(() => { fetchLogs(); });
+	async function toggleLogs() {
+		if (!showLogs) await fetchLogs();
+		showLogs = !showLogs;
+	}
 
 	function formatDate(iso: string) {
 		return new Date(iso).toLocaleString('en-GB', {
@@ -216,7 +220,11 @@
 		{statusLabel[status]}
 	</button>
 
-	{#if logs.length > 0}
+	<button class="logs-btn" onclick={toggleLogs}>
+		{showLogs ? 'Hide Logs' : 'View Logs'}
+	</button>
+
+	{#if showLogs}
 		<div class="logs">
 			<h2>Recent Uploads</h2>
 			{#each logs as log}
@@ -233,6 +241,9 @@
 					</div>
 				</div>
 			{/each}
+		{#if logs.length === 0}
+			<p class="no-logs">No uploads yet.</p>
+		{/if}
 		</div>
 	{/if}
 
@@ -416,6 +427,31 @@
 		color: #15803d;
 		font-size: 0.9rem;
 		text-align: left;
+	}
+
+	.logs-btn {
+		background: none;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 8px 16px;
+		font-size: 0.85rem;
+		color: #64748b;
+		cursor: pointer;
+		transition: border-color 0.15s, color 0.15s;
+		align-self: center;
+	}
+
+	.logs-btn:hover {
+		border-color: #da291c;
+		color: #da291c;
+	}
+
+	.no-logs {
+		margin: 0;
+		padding: 16px;
+		text-align: center;
+		color: #94a3b8;
+		font-size: 0.85rem;
 	}
 
 	.logs {
