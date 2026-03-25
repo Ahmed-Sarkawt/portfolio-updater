@@ -83,7 +83,7 @@
 
 	function showMushu() {
 		mushuVisible = true;
-		setTimeout(() => (mushuVisible = false), 3500);
+		setTimeout(() => (mushuVisible = false), 5000);
 	}
 
 	// Even minutes — check every 30s
@@ -377,7 +377,7 @@
 		border-radius: 50%;
 		margin: 0 auto;
 		display: block;
-		animation: mushu-pop 3.5s ease forwards;
+		animation: mushu-pop 5s ease forwards;
 	}
 
 	@keyframes mushu-pop {
